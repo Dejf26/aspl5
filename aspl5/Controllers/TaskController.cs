@@ -1,43 +1,79 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace aspl5.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class TaskController : ControllerBase
     {
-        // GET: api/<TaskController>
+        private readonly TaskManager _taskManager;
+
+        public TaskController()
+        {
+            _taskManager = new TaskManager();
+        }
+
+        // GET: api/Task
         [HttpGet]
-        public IEnumerable<string> Get()
+        public ActionResult<List<Task>> GetAllTasks()
         {
-            return new string[] { "value1", "value2" };
+            return _taskManager.GetTasks();
         }
 
-        // GET api/<TaskController>/5
+        // GET: api/Task/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public ActionResult<Task> GetTaskById(int id)
         {
-            return "value";
+            var task = _taskManager.GetTaskById(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+            return task;
         }
 
-        // POST api/<TaskController>
+        // POST: api/Task
         [HttpPost]
-        public void Post([FromBody] string value)
+        public ActionResult<Task> CreateTask(Task task)
         {
+            _taskManager.AddTask(task);
+            return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, task);
         }
 
-        // PUT api/<TaskController>/5
+        // PUT: api/Task/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public IActionResult UpdateTask(int id, Task task)
         {
+            if (id != task.Id)
+            {
+                return BadRequest();
+            }
+
+            var wasUpdated = _taskManager.UpdateTask(id, task);
+
+            if (!wasUpdated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
         }
 
-        // DELETE api/<TaskController>/5
+        // DELETE: api/Task/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult DeleteTask(int id)
         {
+            var wasDeleted = _taskManager.DeleteTask(id);
+
+            if (!wasDeleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
         }
     }
 }
